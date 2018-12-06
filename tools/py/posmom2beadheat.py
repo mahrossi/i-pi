@@ -2,7 +2,7 @@
 
 """ posforce2beadheat.py
 
-Reads positions and forces from an i-PI run and computes the bead heat component.
+Reads positions and momenta from an i-PI run and computes the bead heat component.
 
 Assumes the input files are in xyz format and atomic units, with
 prefix.pos_*.xyz and prefix.mom_*.xyz naming scheme.
@@ -27,7 +27,7 @@ def main(prefix, temp):
 
     T = float(temp)
     fns_pos = sorted(glob.glob(prefix + ".pos*"))
-    fns_for = sorted(glob.glob(prefix + ".mom*"))
+    fns_mom = sorted(glob.glob(prefix + ".mom*"))
     fn_out_heat = prefix + ".heat.xyz"
 
     # check that we found the same number of positions and forces files
@@ -43,8 +43,8 @@ def main(prefix, temp):
     print 'number of beads = {:d}'.format(nbeads)
     print
     print 'positions and forces file names:'
-    for fn_pos, fn_for in zip(fns_pos, fns_for):
-        print '{:s}   {:s}'.format(fn_pos, fn_for)
+    for fn_pos, fn_mom in zip(fns_pos, fns_mom):
+        print '{:s}   {:s}'.format(fn_pos, fn_mom)
     print
     print 'output file names:'
     print fn_out_heat
@@ -111,7 +111,7 @@ def main(prefix, temp):
 #        kcv[:, 3:6] *= 0.5
         fullheat = np.sum(heat, axis=0)
         # write output
-        iheat.write("%d\n# Full bead heat flux [a.u.] (x, y, z) = %.8f %.8f %.8f\n" % (natoms, fullheat[0], fullheat[1], fullheat[2])
+        iheat.write("%d\n# Full bead heat flux [a.u.] (x, y, z) = %12.5e %12.5e %12.5e\n" % (natoms, fullheat[0], fullheat[1], fullheat[2]))
         for i in range(natoms):
             iheat.write("%8s %12.5e %12.5e %12.5e\n" % (pos.names[i], heat[i, 0], heat[i, 1], heat[i, 2]))
 
@@ -119,7 +119,7 @@ def main(prefix, temp):
 
     print '\rProcessed {:d} frames.'.format(ifr)
 
-    ikin.close()
+    iheat.close()
 
 if __name__ == '__main__':
     main(*sys.argv[1:])
