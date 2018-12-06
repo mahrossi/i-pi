@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-""" posforce2beadheat.py
+""" posmom2beadheat.py
 
 Reads positions and momenta from an i-PI run and computes the bead heat component.
 
@@ -8,7 +8,7 @@ Assumes the input files are in xyz format and atomic units, with
 prefix.pos_*.xyz and prefix.mom_*.xyz naming scheme.
 
 Syntax:
-   posforce2beadheat.py prefix temperature[K]
+   posmom2beadheat.py prefix temperature[K]
 """
 
 
