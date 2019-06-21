@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ad100996-bf1a-46f0-874d-51687c54ece1" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/clone_ipi_0619.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/input.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/RESTART" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/input.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/our_ref.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/test_array.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.checkpoint" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.force" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.pos_0.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.pos_1.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.pos_2.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.pos_3.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.vel_0.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.vel_1.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.vel_2.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pile_l/tut1.vel_3.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/RESTART" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/input.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/our_ref.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/run_2/input.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/run_2/our_ref.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.checkpoint" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.force" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.pos_0.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.pos_1.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.pos_2.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.pos_3.pdb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.vel_0.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.vel_1.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.vel_2.xyz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thermo/pl_sine/tut1.vel_3.xyz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ipi/engine/motion/dynamics.py" beforeDir="false" afterPath="$PROJECT_DIR$/ipi/engine/motion/dynamics.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ipi/engine/thermostats.py" beforeDir="false" afterPath="$PROJECT_DIR$/ipi/engine/thermostats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ipi/inputs/thermostats.py" beforeDir="false" afterPath="$PROJECT_DIR$/ipi/inputs/thermostats.py" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DockManager">
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file leaf-file-name="thermostats.py" pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/ipi/engine/thermostats.py">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="136">
+                    <caret line="1215" column="40" selection-start-line="1215" selection-start-column="40" selection-end-line="1215" selection-end-column="40" />
+                    <folding>
+                      <element signature="e#437#455#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file leaf-file-name="system.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ipi/engine/system.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-829" />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="cell.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ipi/engine/cell.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <folding>
+                <element signature="e#240#258#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="simulation.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ipi/engine/simulation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-4579" />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dynamics.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ipi/engine/motion/dynamics.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="452">
+              <caret line="154" column="23" selection-start-line="154" selection-start-column="23" selection-end-line="154" selection-end-column="23" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="depend.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ipi/utils/depend.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="372">
+              <caret line="429" column="7" selection-start-line="429" selection-start-column="7" selection-end-line="429" selection-end-column="7" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="thermostats.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ipi/inputs/thermostats.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="292">
+              <caret line="86" column="5" selection-start-line="86" selection-start-column="5" selection-end-line="86" selection-end-column="5" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>pm</find>
+      <find>self.p</find>
+      <find>bind</find>
+      <find>thermostat</find>
+      <find>zpos</find>
+      <find>depend_arra</find>
+      <find>amplfrac</find>
+      <find>depend</find>
+      <find>depend_value</find>
+      <find>depend_va</find>
+      <find>dd</find>
+      <find>depend_array</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/ipi/engine/cell.py" />
+        <option value="$PROJECT_DIR$/ipi/engine/motion/dynamics.py" />
+        <option value="$PROJECT_DIR$/ipi/inputs/thermostats.py" />
+        <option value="$PROJECT_DIR$/ipi/engine/thermostats.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="-138" />
+    <option name="y" value="51" />
+    <option name="width" value="1226" />
+    <option name="height" value="774" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="bin" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="ipi" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="ipi" type="462c0819:PsiDirectoryNode" />
+              <item name="engine" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="ipi" type="462c0819:PsiDirectoryNode" />
+              <item name="engine" type="462c0819:PsiDirectoryNode" />
+              <item name="motion" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="ipi" type="462c0819:PsiDirectoryNode" />
+              <item name="inputs" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="ipi" type="462c0819:PsiDirectoryNode" />
+              <item name="inputs" type="462c0819:PsiDirectoryNode" />
+              <item name="motion" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="clone_ipi_0619" type="b2602c69:ProjectViewProjectNode" />
+              <item name="clone_ipi_0619" type="462c0819:PsiDirectoryNode" />
+              <item name="ipi" type="462c0819:PsiDirectoryNode" />
+              <item name="utils" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ad100996-bf1a-46f0-874d-51687c54ece1" name="Default" comment="" />
+      <created>1560956730800</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1560956730800</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-138" y="51" width="1226" height="774" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.271615" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Python Console" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info id="Favorites" side_tool="true" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+    </layout>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/ipi/utils/prng.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-422" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/utils/units.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/inputs/interface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1156" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/inputs/beads.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-973" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/inputs/ensembles.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/beads.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-4115" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/initializer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7636" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/utils/nmtransform.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2583">
+          <caret line="52" column="7" lean-forward="true" selection-start-line="52" selection-start-column="7" selection-end-line="52" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/forces.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1173">
+          <caret line="340" column="59" selection-start-line="340" selection-start-column="59" selection-end-line="340" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/utils/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/motion/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#153#179#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/motion/motion.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-381" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/inputs/cell.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-267">
+          <folding>
+            <element signature="e#197#218#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/normalmodes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="755">
+          <caret line="151" column="100" selection-start-line="151" selection-start-column="100" selection-end-line="151" selection-end-column="100" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bin/i-pi">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-978">
+          <caret line="9" lean-forward="true" selection-start-line="9" selection-end-line="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/system.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-829" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/cell.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#240#258#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/simulation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-4579" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/motion/dynamics.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="452">
+          <caret line="154" column="23" selection-start-line="154" selection-start-column="23" selection-end-line="154" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/inputs/thermostats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="292">
+          <caret line="86" column="5" selection-start-line="86" selection-start-column="5" selection-end-line="86" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/utils/depend.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="372">
+          <caret line="429" column="7" selection-start-line="429" selection-start-column="7" selection-end-line="429" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ipi/engine/thermostats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="1215" column="40" selection-start-line="1215" selection-start-column="40" selection-end-line="1215" selection-end-column="40" />
+          <folding>
+            <element signature="e#437#455#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ScopeChooserConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>

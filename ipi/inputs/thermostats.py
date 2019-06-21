@@ -51,7 +51,7 @@ class InputThermoBase(Input):
     """
 
     attribs = {"mode": (InputAttribute, {"dtype": str,
-                                         "options": ["", "langevin", "svr", "pile_l", "pile_g", "gle", "nm_gle", "nm_gle_g", "cl", "ffl"],
+                                         "options": ["", "langevin", "svr", "pile_l", "pile_g", "gle", "nm_gle", "nm_gle_g", "cl", "ffl", "pl_sine", "svr_sine"],
                                          "help": "The style of thermostatting. 'langevin' specifies a white noise langevin equation to be attached to the cartesian representation of the momenta. 'svr' attaches a velocity rescaling thermostat to the cartesian representation of the momenta. Both 'pile_l' and 'pile_g' attaches a white noise langevin thermostat to the normal mode representation, with 'pile_l' attaching a local langevin thermostat to the centroid mode and 'pile_g' instead attaching a global velocity rescaling thermostat. 'gle' attaches a coloured noise langevin thermostat to the cartesian representation of the momenta, 'nm_gle' attaches a coloured noise langevin thermostat to the normal mode representation of the momenta and a langevin thermostat to the centroid and 'nm_gle_g' attaches a gle thermostat to the normal modes and a svr thermostat to the centroid. 'cl' represents a modified langevin thermostat which compensates for additional white noise from noisy forces or for dissipative effects. 'ffl' is the fast-forward langevin thermostat, in which momenta are flipped back whenever the action of the thermostat changes its direction. 'multiple' is a special thermostat mode, in which one can define multiple thermostats _inside_ the thermostat tag."
                                          })}
     fields = {"ethermo": (InputValue, {"dtype": float,
@@ -91,7 +91,13 @@ class InputThermoBase(Input):
                                     "dimension": "time"}),
               "flip": (InputValue, {"dtype": str,
                                     "default": "rescale",
-                                    "help": "Flipping type for ffl thermostat ('soft', 'hard', 'rescale', 'none')"})
+                                    "help": "Flipping type for ffl thermostat ('soft', 'hard', 'rescale', 'none')"}),
+              "amplfrac": (InputValue, {"dtype":float,
+                                        "default": 0.0,
+                                        "help": "size of temp perturbation as fraction of mean temperature"}),
+              "nbins": (InputValue, {"dtype":int,
+                                     "default": 50,
+                                     "help": "number of bins along z direction for temperature perturbation"})
               }
 
     dynamic = {}
@@ -153,6 +159,17 @@ class InputThermoBase(Input):
             self.mode.store("ffl")
             self.tau.store(thermo.tau)
             self.flip.store(thermo.flip)
+        elif type(thermo) is ethermostats.Thermo_PILESine:
+            self.mode.store("pl_sine")
+            self.tau.store(thermo.tau)
+            self.pile_lambda.store(thermo.pilescale)
+            self.amplfrac.store(thermo.amplfrac)
+            self.nbins.store(thermo.nbins)
+        elif type(thermo) is ethermostats.ThermoSine:
+            self.mode.store("svr_sine")
+            self.tau.store(thermo.tau)
+            self.amplfrac.store(thermo.amplfrac)
+            self.nbins.store(thermo.nbins)
         elif type(thermo) is ethermostats.Thermostat:
             self.mode.store("")
         else:
@@ -201,6 +218,10 @@ class InputThermoBase(Input):
             thermo = ethermostats.ThermoCL(tau=self.tau.fetch(), intau=self.intau.fetch(), idtau=self.idtau.fetch(), apat=self.apat.fetch())
         elif self.mode.fetch() == "ffl":
             thermo = ethermostats.ThermoFFL(tau=self.tau.fetch(), flip=self.flip.fetch())
+        elif self.mode.fetch() == "pl_sine":
+            thermo = ethermostats.Thermo_PILESine(tau=self.tau.fetch(), scale=self.pile_lambda.fetch(), amplfrac=self.amplfrac.fetch(), nbins=self.nbins.fetch())
+        elif self.mode.fetch() == "svr_sine":
+            thermo = ethermostats.ThermoSine(tau=self.tau.fetch(), amplfrac=self.amplfrac.fetch(), nbins=self.nbins.fetch())
         elif self.mode.fetch() == "":
             thermo = ethermostats.Thermostat()
         else:
@@ -216,7 +237,7 @@ class InputThermoBase(Input):
         super(InputThermoBase, self).check()
         mode = self.mode.fetch()
 
-        if mode in ["langevin", "svr", "pile_l", "pile_g", "nm_gle_g", "ffl"]:
+        if mode in ["langevin", "svr", "pile_l", "pile_g", "nm_gle_g", "ffl", "pl_sine", "svr_sine"]:
             if self.tau.fetch() <= 0:
                 raise ValueError("The thermostat friction coefficient must be set to a positive value")
         if mode == "cl":

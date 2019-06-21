@@ -149,7 +149,7 @@ class Dynamics(Motion):
         dpipe(dself.ntemp, dthrm.temp)
 
         # depending on the kind, the thermostat might work in the normal mode or the bead representation.
-        self.thermostat.bind(beads=self.beads, nm=self.nm, prng=prng, fixdof=fixdof)
+        self.thermostat.bind(beads=self.beads, nm=self.nm, prng=prng, fixdof=fixdof, cell=self.cell)
 
         # first makes sure that the barostat has the correct stress andf timestep, then proceeds with binding it.
         dpipe(dself.ntemp, dbaro.temp)

@@ -19,10 +19,12 @@ from ipi.utils.prng import Random
 from ipi.utils.messages import verbosity, warning, info
 from ipi.engine.beads import Beads
 from ipi.engine.normalmodes import NormalModes
+#bs: need length of simulation box along z direction
+from ipi.engine.cell import Cell
 
 
 __all__ = ['Thermostat', 'ThermoLangevin', 'ThermoFFL', 'ThermoPILE_L', 'ThermoPILE_G', 'ThermoSVR',
-           'ThermoGLE', 'ThermoNMGLE', 'ThermoNMGLEG', 'ThermoCL', 'MultiThermo']
+           'ThermoGLE', 'ThermoNMGLE', 'ThermoNMGLEG', 'ThermoCL', 'MultiThermo', 'Thermo_PILESine', 'ThermoSine']
 
 
 class Thermostat(dobject):
@@ -1145,6 +1147,181 @@ class MultiThermo(Thermostat):
         for t in self.tlist:
             t.step()
         pass
+
+#Ben Sutherland: implementation of a sinusoidal perturbation thermostat with which to calculate
+#thermal diffusivities
+class ThermoSine(Thermostat):
+
+    """Represents a stochastic velocity rescaling thermostat.
+
+    Depend objects:
+       tau: Centroid thermostat damping time scale. Larger values give a
+          less strongly coupled centroid thermostat.
+       K: Scaling factor for the total kinetic energy. Depends on the
+          temperature.
+       et: Parameter determining the strength of the thermostat coupling.
+          Depends on tau and the time step.
+    """
+
+    def get_et(self):
+        """Calculates the damping term in the propagator."""
+
+        return np.exp(-self.dt / self.tau)
+
+    def get_K(self):
+        """Calculates the average kinetic energy per degree of freedom."""
+
+        return Constants.kb * self.temp * 0.5
+
+    def __init__(self, temp=1.0, dt=1.0, tau=1.0, ethermo=0.0, amplfrac=0.0, nbins=50):
+        """Initialises ThermoSVR.
+
+        Args:
+           temp: The simulation temperature. Defaults to 1.0.
+           dt: The simulation time step. Defaults to 1.0.
+           tau: The thermostat damping timescale. Defaults to 1.0.
+           ethermo: The initial conserved energy quantity. Defaults to 0.0. Will
+              be non-zero if the thermostat is initialised from a checkpoint file.
+           amplfrac: the fractional (half) amplitude of the sinusoidal temperature perturbation
+           nbins: number of bins the simulation box is partitioned into along the z direction
+                for the temperature perturbation
+        """
+
+        super(ThermoSine, self).__init__(temp, dt, ethermo)
+        dself = dd(self)
+
+        dself.tau = depend_value(value=tau, name='tau')
+        dself.amplfrac = depend_value(value=amplfrac, name='amplfrac')
+        dself.nbins = depend_value(value=nbins, name='nbins')
+        dself.et = depend_value(name="et", func=self.get_et,
+                                dependencies=[dself.tau, dself.dt])
+        dself.K = depend_value(name="K", func=self.get_K, dependencies=[dself.temp])
+
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
+        """Binds the appropriate degrees of freedom to the thermostat.
+        accesses centroid normal mode coordinates from nm
+
+        """
+        dself = dd(self)
+
+        if nm is None or not type(nm) is NormalModes:
+            raise TypeError("ThermoSine.bind expects a Normal Mode object to bind to")
+        if cell is None or not type(cell) is Cell:
+            raise TypeError("ThermoSine.bind expects a Cell object to bind to")
+
+        #find lz and z positions of the centroids
+        dself.zlen = cell.h[2][2]
+        dself.zpos = nm.qnm[2::3]
+
+        #attempt to get array of target temperatures to set thermostat to
+        dself.target = depend_array(name="target", value=np.zeros(dself.nbins), func=self.get_sine_temp,
+                                    dependencies=[dself.K, dself.amplfrac, dself.nbins])
+
+        #bind momentum and mass vectors to the thermostat as in ThermoSVR
+        super(ThermoSine, self).bind(pm=(nm.pnm[0, :], nm.dynm3[0, :]), prng=prng, fixdof=fixdof)
+
+    def get_sine_temp(self):
+        """calculates the temperature of the sinusoidal perturbation"""
+        zbins = np.zeros(self.nbins)
+        for i in range(self.nbins):
+            zbins[i] = (i + 0.5) * self.lenz / float(self.nbins)
+
+        return self.K * (1.0 + self.amplfrac * np.sin(2.0 * np.pi * zbins))
+
+    def step(self):
+        """Updates the bound momentum vector with a stochastic velocity rescaling
+        thermostat. See G Bussi, D Donadio, M Parrinello,
+        Journal of Chemical Physics 126, 014101 (2007)
+        """
+
+        K = np.dot(dstrip(self.p), dstrip(self.p) / dstrip(self.m)) * 0.5
+
+        # rescaling is un-defined if the KE is zero
+        if K == 0.0:
+            return
+
+        # gets the stochastic term (basically a Gamma distribution for the kinetic energy)
+        r1 = self.prng.g
+        if (self.ndof - 1) % 2 == 0:
+            rg = 2.0 * self.prng.gamma((self.ndof - 1) / 2)
+        else:
+            rg = 2.0 * self.prng.gamma((self.ndof - 2) / 2) + self.prng.g**2
+
+        alpha2 = self.et + self.K / K * (1 - self.et) * (r1**2 + rg) + 2.0 * r1 * np.sqrt(self.K / K * self.et * (1 - self.et))
+        alpha = np.sqrt(alpha2)
+        if (r1 + np.sqrt(2 * K / self.K * self.et / (1 - self.et))) < 0:
+            alpha *= -1
+
+        self.ethermo += K * (1 - alpha2)
+        self.p *= alpha
+
+
+class Thermo_PILESine(ThermoPILE_L):
+
+    """Represents a PILE thermostat with a global centroid thermostat.
+
+    Simply replaces the Langevin thermostat for the centroid normal mode with
+    a global velocity rescaling thermostat.
+    """
+
+    def __init__(self, temp=1.0, dt=1.0, tau=1.0, ethermo=0.0, scale=1.0, amplfrac=0.0, nbins=50):
+        """Initialises ThermoPILESine.
+
+        Args:
+           temp: The simulation temperature. Defaults to 1.0.
+           dt: The simulation time step. Defaults to 1.0.
+           tau: The centroid thermostat damping timescale. Defaults to 1.0.
+           ethermo: The initial conserved energy quantity. Defaults to 0.0. Will
+              be non-zero if the thermostat is initialised from a checkpoint file.
+           scale: A float used to reduce the intensity of the PILE thermostat if
+              required.
+        """
+
+        super(Thermo_PILESine, self).__init__(temp, dt, tau, ethermo)
+        dself = dd(self)
+        dself.pilescale = depend_value(value=scale, name='pilescale')
+        dself.amplfrac = depend_value(value=amplfrac, name='amplfrac')
+
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
+        """Binds the appropriate degrees of freedom to the thermostat.
+
+        This takes a beads object with degrees of freedom, and makes its momentum
+        and mass vectors members of the thermostat. It also then creates the
+        objects that will hold the data needed in the thermostat algorithms
+        and the dependency network.
+
+        Uses the PILE_L bind interface, with bindcentroid set to false so we can
+        specify that thermostat separately, by binding a global
+        thermostat to the centroid mode.
+
+        Args:
+           beads: An optional beads object to take the mass and momentum vectors
+              from.
+           prng: An optional pseudo random number generator object. Defaults to
+              Random().
+           fixdof: An optional integer which can specify the number of constraints
+              applied to the system. Defaults to zero.
+
+        """
+
+        # first binds as a local PILE, then substitutes the thermostat on the centroid
+        prev_ethermo = self.ethermo
+        super(Thermo_PILESine, self).bind(nm=nm, prng=prng, bindcentroid=False, fixdof=fixdof)
+        dself = dd(self)
+
+        # centroid thermostat
+        self._thermos[0] = ThermoSine(temp=1, dt=1, tau=1)
+        t = self._thermos[0]
+        t.bind(nm=nm, prng=prng, fixdof=fixdof, cell=cell)
+        dpipe(dself.temp, dd(t).temp)
+        dpipe(dself.dt, dd(t).dt)
+        dpipe(dself.tau, dd(t).tau)
+        dself.ethermo.add_dependency(dd(t).ethermo)
+
+        # splits any previous ethermo between the thermostats, and finishes to bind ethermo to the sum function
+        for t in self._thermos:
+            t.ethermo = prev_ethermo / nm.nbeads
+        dself.ethermo._func = self.get_ethermo;
 
 
 def hfunc(x):
