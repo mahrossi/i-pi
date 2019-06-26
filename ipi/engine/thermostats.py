@@ -66,7 +66,7 @@ class Thermostat(dobject):
         dself.dt = depend_value(name='dt', value=dt)
         dself.ethermo = depend_value(name='ethermo', value=ethermo)
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
 
         This takes an object with degrees of freedom, and makes their momentum
@@ -97,6 +97,7 @@ class Thermostat(dobject):
             self.prng = Random()
         else:
             self.prng = prng
+
 
         dself = dd(self)
         if not beads is None:
@@ -244,7 +245,7 @@ class ThermoPILE_L(Thermostat):
         dself.tau = depend_value(value=tau, name='tau')
         dself.pilescale = depend_value(value=scale, name='pilescale')
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, bindcentroid=True, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, bindcentroid=True, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
 
         This takes a beads object with degrees of freedom, and makes its momentum
@@ -464,7 +465,7 @@ class ThermoPILE_G(ThermoPILE_L):
         dself = dd(self)
         dself.pilescale = depend_value(value=scale, name='pilescale')
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
 
         This takes a beads object with degrees of freedom, and makes its momentum
@@ -602,7 +603,7 @@ class ThermoGLE(Thermostat):
 
         self.s = np.zeros(0)
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
 
         This takes an object with degrees of freedom, and makes their momentum
@@ -724,7 +725,7 @@ class ThermoNMGLE(Thermostat):
         else:
             dself.C = depend_value(value=C.copy(), name='C')
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
 
         This takes an object with degrees of freedom, and makes their momentum
@@ -847,7 +848,7 @@ class ThermoNMGLEG(ThermoNMGLE):
         super(ThermoNMGLEG, self).__init__(temp, dt, A, C, ethermo)
         dself.tau = depend_value(value=tau, name='tau')
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
 
         This takes an object with degrees of freedom, and makes their momentum
@@ -1131,7 +1132,7 @@ class MultiThermo(Thermostat):
             et += t.ethermo
         return et
 
-    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None):
+    def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat."""
 
         # just binds all the sub-thermostats
@@ -1203,28 +1204,41 @@ class ThermoSine(Thermostat):
 
         """
         dself = dd(self)
-
         if nm is None or not type(nm) is NormalModes:
             raise TypeError("ThermoSine.bind expects a Normal Mode object to bind to")
         if cell is None or not type(cell) is Cell:
             raise TypeError("ThermoSine.bind expects a Cell object to bind to")
 
         #find lz and z positions of the centroids
-        dself.zlen = cell.h[2][2]
-        dself.zpos = nm.qnm[2::3]
+        dself.lenz = cell.h[2][2]
+        print "lz is", self.lenz
+        dself.zpos = nm.qnm[0, 2::3] / np.sqrt(nm.nbeads)
+
 
         #attempt to get array of target temperatures to set thermostat to
-        dself.target = depend_array(name="target", value=np.zeros(dself.nbins), func=self.get_sine_temp,
+        dself.zbins = depend_array(name="zbins", value=np.zeros(self.nbins + 1), func=self.get_zbins, dependencies=[dself.nbins])
+        dself.target = depend_array(name="target", value=np.zeros(self.nbins), func=self.get_sine_temp,
                                     dependencies=[dself.K, dself.amplfrac, dself.nbins])
 
         #bind momentum and mass vectors to the thermostat as in ThermoSVR
         super(ThermoSine, self).bind(pm=(nm.pnm[0, :], nm.dynm3[0, :]), prng=prng, fixdof=fixdof)
 
+    def get_zbins(self):
+        """returns an np array of the (nbins + 1) bin edge positions - 0 and lenz are included -
+         for which the system is to be thermostatted to - for use in np.digitize
+        """
+
+        #TODO: could retstep be useful?
+        return np.linspace(0.0, self.lenz, num=self.nbins + 1, endpoint=True)
+
     def get_sine_temp(self):
-        """calculates the temperature of the sinusoidal perturbation"""
+        """calculates the average target kinetic energy of each bin to be thermostatted, per
+            degree of freedom
+        """
+
         zbins = np.zeros(self.nbins)
         for i in range(self.nbins):
-            zbins[i] = (i + 0.5) * self.lenz / float(self.nbins)
+            zbins[i] = (i + 0.5) / float(self.nbins)
 
         return self.K * (1.0 + self.amplfrac * np.sin(2.0 * np.pi * zbins))
 
@@ -1234,26 +1248,71 @@ class ThermoSine(Thermostat):
         Journal of Chemical Physics 126, 014101 (2007)
         """
 
-        K = np.dot(dstrip(self.p), dstrip(self.p) / dstrip(self.m)) * 0.5
+        #we need to sort the atoms into bins depending on their centroid z coordinate
+        #in order to determine the number of degrees of freedom in each bin
+        #bin = np.zeros(len(self.zpos), dtype=int)
+        #dof = np.zeros(self.nbins)
+        K = np.zeros(self.nbins)
+        alpha = np.zeros(self.nbins)
 
-        # rescaling is un-defined if the KE is zero
-        if K == 0.0:
-            return
+        #make sure self.zpos is inside the main box - not needed?
+        """
+        for i in range(len(self.zpos)):
+            while(self.zpos[i] < 0.0):
+                self.zpos[i] += self.lenz
+            while(self.zpos[i] >= self.lenz):
+                self.zpos[i] -= self.lenz
+                """
 
-        # gets the stochastic term (basically a Gamma distribution for the kinetic energy)
-        r1 = self.prng.g
-        if (self.ndof - 1) % 2 == 0:
-            rg = 2.0 * self.prng.gamma((self.ndof - 1) / 2)
-        else:
-            rg = 2.0 * self.prng.gamma((self.ndof - 2) / 2) + self.prng.g**2
+        #returns an array such that index[i] contains the index of the bin that zpos[i] is inside (from 0 to n_bins - 1)
+        index = np.digitize(self.zpos, self.zbins, right=False) - 1
+        #print index
 
-        alpha2 = self.et + self.K / K * (1 - self.et) * (r1**2 + rg) + 2.0 * r1 * np.sqrt(self.K / K * self.et * (1 - self.et))
-        alpha = np.sqrt(alpha2)
-        if (r1 + np.sqrt(2 * K / self.K * self.et / (1 - self.et))) < 0:
-            alpha *= -1
+        #an array to contain the number of atoms in each bin - ie bin_count[i] contains the number of atoms in bin[i]
+        bin_count = np.bincount(index)
+        #the number of degrees of freedom in each bin
+        dof = 3 * bin_count
 
-        self.ethermo += K * (1 - alpha2)
-        self.p *= alpha
+        #find the total kinetic energy in each bin
+        for i in range(len(self.zpos)):
+            K[index[i]] += ((self.p[3*i])**2 + (self.p[3*i+1])**2 + (self.p[3*i+2])**2) * 0.5 / self.m[i]
+
+        """
+            #find the bin that each atom is in
+            bin[i] = index
+            #add the contribution to the degrees of freedom and kinetic energy of this bin
+            dof[index] += 3
+            K[index] += ((self.p[3*i])**2 + (self.p[3*i+1])**2 + (self.p[3*i+2])**2) * 0.5 / self.m[i]
+        """
+        #now find the scaling parameter for each bin
+        for i in range(self.nbins):
+            #no scaling if there are no atoms inside the bin
+            if K[i] == 0:
+                alpha[i] = 1.0
+                continue
+            #generate different random scaling for each bin
+            r1 = self.prng.g
+            if (dof[i] - 1) % 2 == 0:
+                rg = 2.0 * self.prng.gamma((dof[i] - 1) / 2)
+            else:
+                rg = 2.0 * self.prng.gamma((dof[i] - 2) / 2) + self.prng.g**2
+
+            alpha2 = self.et + self.target[i] / K[i] * (1 - self.et) * (r1**2 + rg) + 2.0 * r1 * np.sqrt(self.target[i] / K[i] * self.et * (1 - self.et))
+            alpha[i] = np.sqrt(alpha2)
+            #why is there a factor of two in the sqrt below?
+            #it doesn't seem to be in the paper but is in ThermoSVR class...
+            if (r1 + np.sqrt(2 * K[i] / self.target[i] * self.et / (1 - self.et))) < 0:
+                alpha[i] *= -1
+
+
+        for i in range(len(self.zpos)):
+            #TODO: later - do something with ethermo?
+            #self.ethermo += K * (1 - alpha2)
+
+            #scale momenta by the scaling parameter for the bin atom i is inside
+            self.p[3*i] *= alpha[index[i]]
+            self.p[3*i+1] *= alpha[index[i]]
+            self.p[3*i+2] *= alpha[index[i]]
 
 
 class Thermo_PILESine(ThermoPILE_L):
@@ -1281,6 +1340,7 @@ class Thermo_PILESine(ThermoPILE_L):
         dself = dd(self)
         dself.pilescale = depend_value(value=scale, name='pilescale')
         dself.amplfrac = depend_value(value=amplfrac, name='amplfrac')
+        dself.nbins = depend_value(value=nbins, name='nbins')
 
     def bind(self, beads=None, atoms=None, pm=None, nm=None, prng=None, fixdof=None, cell=None):
         """Binds the appropriate degrees of freedom to the thermostat.
@@ -1310,7 +1370,7 @@ class Thermo_PILESine(ThermoPILE_L):
         dself = dd(self)
 
         # centroid thermostat
-        self._thermos[0] = ThermoSine(temp=1, dt=1, tau=1)
+        self._thermos[0] = ThermoSine(temp=1, dt=1, tau=1, ethermo=0.0, amplfrac=0.0, nbins=50)
         t = self._thermos[0]
         t.bind(nm=nm, prng=prng, fixdof=fixdof, cell=cell)
         dpipe(dself.temp, dd(t).temp)
