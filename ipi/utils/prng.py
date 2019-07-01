@@ -115,3 +115,18 @@ class Random(object):
         """
 
         return self.rng.standard_normal(shape)
+
+    def gamma_vec(self, k, size=None):
+        """Interface to the standard gamma() function, returning as array
+
+        Args:
+            k: Shape parameter for the gamma distribution.
+            size: The shape of the array to be returned
+
+        Returns:
+            An array with the required shape where each element is taken from
+            a gamma distribution with shape k and mean value equal to one.
+
+        """
+
+        return self.rng.standard_gamma(k, size)

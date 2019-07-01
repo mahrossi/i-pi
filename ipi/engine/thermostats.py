@@ -1212,7 +1212,8 @@ class ThermoSine(Thermostat):
         #find lz and z positions of the centroids
         dself.lenz = cell.h[2][2]
         print "lz is", self.lenz
-        dself.zpos = nm.qnm[0, 2::3] / np.sqrt(nm.nbeads)
+        self.nm = nm
+        dself.zpos = depend_array(name="zpos", value=np.zeros(nm.natoms), func=self.get_zpos, dependencies=[dd(nm).qnm])
 
 
         #attempt to get array of target temperatures to set thermostat to
@@ -1223,12 +1224,16 @@ class ThermoSine(Thermostat):
         #bind momentum and mass vectors to the thermostat as in ThermoSVR
         super(ThermoSine, self).bind(pm=(nm.pnm[0, :], nm.dynm3[0, :]), prng=prng, fixdof=fixdof)
 
+    def get_zpos(self):
+        """finds the position of the z coordinate of the centroid"""
+
+        return self.nm.qnm[0, 2::3] / np.sqrt(self.nm.nbeads)
+
     def get_zbins(self):
         """returns an np array of the (nbins + 1) bin edge positions - 0 and lenz are included -
          for which the system is to be thermostatted to - for use in np.digitize
-        """
+         """
 
-        #TODO: could retstep be useful?
         return np.linspace(0.0, self.lenz, num=self.nbins + 1, endpoint=True)
 
     def get_sine_temp(self):
@@ -1249,71 +1254,49 @@ class ThermoSine(Thermostat):
         """
 
         #we need to sort the atoms into bins depending on their centroid z coordinate
-        #in order to determine the number of degrees of freedom in each bin
-        #bin = np.zeros(len(self.zpos), dtype=int)
-        #dof = np.zeros(self.nbins)
-        K = np.zeros(self.nbins)
-        alpha = np.zeros(self.nbins)
+        #in order to determine the number of degrees of freedom
 
-        #make sure self.zpos is inside the main box - not needed?
-        """
-        for i in range(len(self.zpos)):
-            while(self.zpos[i] < 0.0):
-                self.zpos[i] += self.lenz
-            while(self.zpos[i] >= self.lenz):
-                self.zpos[i] -= self.lenz
-                """
+        #make sure self.zpos is inside the main box (will only work if z isn't more than one box length away from main box)
+        z_centroid = self.zpos - np.floor(self.zpos / self.lenz) * self.lenz
 
         #returns an array such that index[i] contains the index of the bin that zpos[i] is inside (from 0 to n_bins - 1)
-        index = np.digitize(self.zpos, self.zbins, right=False) - 1
-        #print index
-
-        #an array to contain the number of atoms in each bin - ie bin_count[i] contains the number of atoms in bin[i]
+        index = np.digitize(z_centroid, self.zbins, right=False) - 1
+        #repeat each element 3 times to give the indexes in the p array
+        index_p = np.repeat(index, 3)
+        # an array to contain the number of atoms in each bin - ie bin_count[i] contains the number of atoms in bin[i]
         bin_count = np.bincount(index)
-        #the number of degrees of freedom in each bin
+        # the number of degrees of freedom in each bin
         dof = 3 * bin_count
+        #find an array for the KE in each degree of freedom
+        K_arr = np.multiply(dstrip(self.p), dstrip(self.p) / (2.0 * dstrip(self.m)))
+        #gives the indexes of K_arr and self.p that are within each bin
+        bin_contents = [np.where(index_p==i) for i in range(self.nbins)]
 
-        #find the total kinetic energy in each bin
-        for i in range(len(self.zpos)):
-            K[index[i]] += ((self.p[3*i])**2 + (self.p[3*i+1])**2 + (self.p[3*i+2])**2) * 0.5 / self.m[i]
+        #sum over KE for each bin
+        K = np.asarray([K_arr[bin_contents[i][:]].sum() for i in range(self.nbins)])
+        #TODO: check if any KE are zero?
 
-        """
-            #find the bin that each atom is in
-            bin[i] = index
-            #add the contribution to the degrees of freedom and kinetic energy of this bin
-            dof[index] += 3
-            K[index] += ((self.p[3*i])**2 + (self.p[3*i+1])**2 + (self.p[3*i+2])**2) * 0.5 / self.m[i]
-        """
-        #now find the scaling parameter for each bin
+        #an array to contain the random gaussian numbers needed for alpha and the sign test
+        r_gauss = self.prng.gvec(self.nbins)
+        #an array containing the shape parameter for the gamma distribution
+        k_arr = (dof - 1.0) // 2
+        #an array that contains ones where an extra gaussian number needs to be added, and zeros elsewhere
+        rem_array = dof % 2
+        #an array to contain the random gamma-distributed numbers
+        #with an extra gaussian number added where necessary
+        r_gamma = self.prng.gamma_vec(k_arr, self.nbins) + np.multiply(rem_array, self.prng.gvec(self.nbins))
+        #determination of the squared scaling parameter
+        alpha2 = self.et + self.target / K * (1 - self.et) * (r_gauss**2 + r_gamma) + 2.0 * r_gauss * np.sqrt(self.target / K * self.et * (1 - self.et))
+        #an array that contains -1 where the sign of alpha needs to be flipped, and +1 otherwise
+        sgn_arr = np.sign(r_gauss + np.sqrt(2 * K / self.target * self.et / (1 - self.et)))
+        #determination of the scaling parameters for each bin
+        alpha = np.multiply(sgn_arr, np.sqrt(alpha2))
+
+        #operating on slices of normal array is quicker than on slices of the depend array
+        p_save = dstrip(self.p).copy()
         for i in range(self.nbins):
-            #no scaling if there are no atoms inside the bin
-            if K[i] == 0:
-                alpha[i] = 1.0
-                continue
-            #generate different random scaling for each bin
-            r1 = self.prng.g
-            if (dof[i] - 1) % 2 == 0:
-                rg = 2.0 * self.prng.gamma((dof[i] - 1) / 2)
-            else:
-                rg = 2.0 * self.prng.gamma((dof[i] - 2) / 2) + self.prng.g**2
-
-            alpha2 = self.et + self.target[i] / K[i] * (1 - self.et) * (r1**2 + rg) + 2.0 * r1 * np.sqrt(self.target[i] / K[i] * self.et * (1 - self.et))
-            alpha[i] = np.sqrt(alpha2)
-            #why is there a factor of two in the sqrt below?
-            #it doesn't seem to be in the paper but is in ThermoSVR class...
-            if (r1 + np.sqrt(2 * K[i] / self.target[i] * self.et / (1 - self.et))) < 0:
-                alpha[i] *= -1
-
-
-        for i in range(len(self.zpos)):
-            #TODO: later - do something with ethermo?
-            #self.ethermo += K * (1 - alpha2)
-
-            #scale momenta by the scaling parameter for the bin atom i is inside
-            self.p[3*i] *= alpha[index[i]]
-            self.p[3*i+1] *= alpha[index[i]]
-            self.p[3*i+2] *= alpha[index[i]]
-
+            p_save[bin_contents[i][:]] *= alpha[i]
+        self.p = p_save
 
 class Thermo_PILESine(ThermoPILE_L):
 
