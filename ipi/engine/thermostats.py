@@ -1211,7 +1211,6 @@ class ThermoSine(Thermostat):
 
         #find lz and z positions of the centroids
         dself.lenz = cell.h[2][2]
-        print "lz is", self.lenz
         self.nm = nm
         dself.zpos = depend_array(name="zpos", value=np.zeros(nm.natoms), func=self.get_zpos, dependencies=[dd(nm).qnm])
 
@@ -1243,6 +1242,7 @@ class ThermoSine(Thermostat):
 
         zbins = np.zeros(self.nbins)
         for i in range(self.nbins):
+            #finds the centre position of each bin in units of lz
             zbins[i] = (i + 0.5) / float(self.nbins)
 
         return self.K * (1.0 + self.amplfrac * np.sin(2.0 * np.pi * zbins))
@@ -1268,7 +1268,7 @@ class ThermoSine(Thermostat):
         # the number of degrees of freedom in each bin
         dof = 3 * bin_count
         #find an array for the KE in each degree of freedom
-        K_arr = np.multiply(dstrip(self.p), dstrip(self.p) / (2.0 * dstrip(self.m)))
+        K_arr = 0.5 * np.multiply(dstrip(self.p), dstrip(self.p) / dstrip(self.m))
         #gives the indexes of K_arr and self.p that are within each bin
         bin_contents = [np.where(index_p==i) for i in range(self.nbins)]
 
@@ -1284,7 +1284,7 @@ class ThermoSine(Thermostat):
         rem_array = dof % 2
         #an array to contain the random gamma-distributed numbers
         #with an extra gaussian number added where necessary
-        r_gamma = self.prng.gamma_vec(k_arr, self.nbins) + np.multiply(rem_array, self.prng.gvec(self.nbins))
+        r_gamma = (2.0 * self.prng.gamma_vec(k_arr, self.nbins)) + np.multiply(rem_array, self.prng.gvec(self.nbins))
         #determination of the squared scaling parameter
         alpha2 = self.et + self.target / K * (1 - self.et) * (r_gauss**2 + r_gamma) + 2.0 * r_gauss * np.sqrt(self.target / K * self.et * (1 - self.et))
         #an array that contains -1 where the sign of alpha needs to be flipped, and +1 otherwise
@@ -1295,6 +1295,7 @@ class ThermoSine(Thermostat):
         #operating on slices of normal array is quicker than on slices of the depend array
         p_save = dstrip(self.p).copy()
         for i in range(self.nbins):
+            self.ethermo += K[i] * (1 - alpha2[i])
             p_save[bin_contents[i][:]] *= alpha[i]
         self.p = p_save
 
