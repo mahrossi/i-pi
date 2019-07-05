@@ -657,7 +657,12 @@ class Properties(dobject):
                           of atoms. The 5 numbers output are 1) the average over the excess potential energy for
                           an isotope atom substitution <sc>, 2) the average of the squares of the excess potential
                           energy <sc**2>, and 3) the average of the exponential of excess potential energy
-                          <exp(-beta*sc)>, and 4-5) Suzuki-Chin and Takahashi-Imada 4th-order reweighing term"""}
+                          <exp(-beta*sc)>, and 4-5) Suzuki-Chin and Takahashi-Imada 4th-order reweighing term"""},
+            "temp_profile": {"dimension": "temperature",
+                             "size": 50,
+                             'func': self.get_temp_profile,
+                             "help": "The average temperature of 50 bins along the z direction, returned as an array",
+                             "longhelp": """Stuff to add here"""}
         }
 
     def bind(self, system):
@@ -2141,6 +2146,37 @@ class Properties(dobject):
             warning("Couldn't find an atom which matched the argument of TI potential, setting to zero.", verbosity.medium)
 
         return ti
+
+    def get_temp_profile(self):
+        z_centroid = dstrip(self.beads.qc)[2::3]
+        #print "z_centroid are", z_centroid
+        lenz = dstrip(self.cell.h)[2][2]
+        #print "lenz is", lenz
+        z_centroid = z_centroid - np.floor(z_centroid/lenz) * lenz
+        #print "z_centroid after pbc is", z_centroid
+        m_arr = dstrip(self.beads.m3)[0][:]
+        #print "m_arr is", m_arr
+        #print len(m_arr)
+        bin_edges = np.linspace(0.0, lenz, num=51, endpoint=True)
+        #print "bin_edges is", bin_edges
+        index = np.digitize(z_centroid, bin_edges, right=False) - 1
+        #print "bin indexes is", index
+        index_p = np.repeat(index, 3)
+        #print "momenta bin indexes is", index_p
+        #print "centroid momenta is", self.beads.pc
+        #print len(dstrip(self.beads.pc))
+        dof = 3 * np.bincount(index)
+        #print "dof in each bin is", dof
+        K_arr = 0.5 * np.multiply(dstrip(self.beads.pc), dstrip(self.beads.pc) / m_arr)
+        #print "K_arr is", K_arr
+        #print len(K_arr)
+        bin_contents = [np.where(index_p == i) for i in range(50)]
+        #print "bin_contents is", bin_contents
+        K = np.asarray([K_arr[bin_contents[i][:]].sum() for i in range(50)])
+        #print "K_bins is ", K
+        temp_array = 2 * K / (dof * Constants.kb)
+        #print "temp_array is", temp_array
+        return temp_array
 
 
 class Trajectories(dobject):
