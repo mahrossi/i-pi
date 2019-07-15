@@ -1193,6 +1193,7 @@ class ThermoSine(Thermostat):
 
         dself.tau = depend_value(value=tau, name='tau')
         dself.amplfrac = depend_value(value=amplfrac, name='amplfrac')
+        #print "amplfrac is", self.amplfrac
         dself.nbins = depend_value(value=nbins, name='nbins')
         dself.et = depend_value(name="et", func=self.get_et,
                                 dependencies=[dself.tau, dself.dt])
@@ -1211,6 +1212,7 @@ class ThermoSine(Thermostat):
 
         #find lz and z positions of the centroids
         dself.lenz = cell.h[2][2]
+
         self.nm = nm
         dself.zpos = depend_array(name="zpos", value=np.zeros(nm.natoms), func=self.get_zpos, dependencies=[dd(nm).qnm])
 
@@ -1360,6 +1362,8 @@ class Thermo_PILESine(ThermoPILE_L):
         dpipe(dself.temp, dd(t).temp)
         dpipe(dself.dt, dd(t).dt)
         dpipe(dself.tau, dd(t).tau)
+        dpipe(dself.amplfrac, dd(t).amplfrac)
+        dpipe(dself.nbins, dd(t).nbins)
         dself.ethermo.add_dependency(dd(t).ethermo)
 
         # splits any previous ethermo between the thermostats, and finishes to bind ethermo to the sum function
