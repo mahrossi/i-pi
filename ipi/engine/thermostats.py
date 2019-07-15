@@ -1195,6 +1195,7 @@ class ThermoSine(Thermostat):
         dself.amplfrac = depend_value(value=amplfrac, name='amplfrac')
         #print "amplfrac is", self.amplfrac
         dself.nbins = depend_value(value=nbins, name='nbins')
+        print "nbins is", self.nbins
         dself.et = depend_value(name="et", func=self.get_et,
                                 dependencies=[dself.tau, dself.dt])
         dself.K = depend_value(name="K", func=self.get_K, dependencies=[dself.temp])
@@ -1234,7 +1235,7 @@ class ThermoSine(Thermostat):
         """returns an np array of the (nbins + 1) bin edge positions - 0 and lenz are included -
          for which the system is to be thermostatted to - for use in np.digitize
          """
-
+        #self.zbins.reshape(self, self.nbins + 1)
         return np.linspace(0.0, self.lenz, num=self.nbins + 1, endpoint=True)
 
     def get_sine_temp(self):
@@ -1260,6 +1261,8 @@ class ThermoSine(Thermostat):
 
         #make sure self.zpos is inside the main box (will only work if z isn't more than one box length away from main box)
         z_centroid = self.zpos - np.floor(self.zpos / self.lenz) * self.lenz
+        #print "self.nbins is", self.nbins
+        #print "self.zbins is", self.zbins
 
         #returns an array such that index[i] contains the index of the bin that zpos[i] is inside (from 0 to n_bins - 1)
         index = np.digitize(z_centroid, self.zbins, right=False) - 1
@@ -1269,34 +1272,56 @@ class ThermoSine(Thermostat):
         bin_count = np.bincount(index)
         # the number of degrees of freedom in each bin
         dof = 3 * bin_count
+        #print dof
+        valid_indices = np.flatnonzero(dof)
+        valid_dof = dof[valid_indices]
+        valid_length = len(valid_dof)
+        #print valid_dof
+        #print "len nonzero is ", len(valid_indices)
+        #print "valid_indices is", valid_indices
+        #for i in np.nditer(valid_indices):
+            #print i
         #find an array for the KE in each degree of freedom
         K_arr = 0.5 * np.multiply(dstrip(self.p), dstrip(self.p) / dstrip(self.m))
         #gives the indexes of K_arr and self.p that are within each bin
-        bin_contents = [np.where(index_p==i) for i in range(self.nbins)]
+        #test = [np.where((index_p == i) & (dof[i] != 0)) for i in range(self.nbins)]
+        #print "test is ", test
+        bin_contents = [np.where(index_p==i) for i in valid_indices]
+
+        #for i in range(len(valid_indices)):
+            #print "i is", i
+            #print bin_contents[i][:]
+            #print K_arr[bin_contents[i][:]].sum()
 
         #sum over KE for each bin
-        K = np.asarray([K_arr[bin_contents[i][:]].sum() for i in range(self.nbins)])
+        K = np.asarray([K_arr[bin_contents[i][:]].sum() for i in range(len(valid_indices))])
+        #print "KIN_E ARRAY IS", K
         #TODO: check if any KE are zero?
+        valid_target = dstrip(self.target)[valid_indices]
+        #print "valid_target is", valid_target
+        #print len(valid_target)
 
         #an array to contain the random gaussian numbers needed for alpha and the sign test
-        r_gauss = self.prng.gvec(self.nbins)
+        r_gauss = self.prng.gvec(valid_length)
         #an array containing the shape parameter for the gamma distribution
-        k_arr = (dof - 1.0) // 2
+        k_arr = (valid_dof - 1.0) // 2
         #an array that contains ones where an extra gaussian number needs to be added, and zeros elsewhere
-        rem_array = dof % 2
+        rem_array = valid_dof % 2
         #an array to contain the random gamma-distributed numbers
         #with an extra gaussian number added where necessary
-        r_gamma = (2.0 * self.prng.gamma_vec(k_arr, self.nbins)) + np.multiply(rem_array, self.prng.gvec(self.nbins))
+        r_gamma = (2.0 * self.prng.gamma_vec(k_arr, valid_length)) + np.multiply(rem_array, self.prng.gvec(valid_length))
         #determination of the squared scaling parameter
-        alpha2 = self.et + self.target / K * (1 - self.et) * (r_gauss**2 + r_gamma) + 2.0 * r_gauss * np.sqrt(self.target / K * self.et * (1 - self.et))
+        alpha2 = self.et + valid_target / K * (1 - self.et) * (r_gauss**2 + r_gamma) + 2.0 * r_gauss * np.sqrt(valid_target / K * self.et * (1 - self.et))
         #an array that contains -1 where the sign of alpha needs to be flipped, and +1 otherwise
-        sgn_arr = np.sign(r_gauss + np.sqrt(2 * K / self.target * self.et / (1 - self.et)))
+        sgn_arr = np.sign(r_gauss + np.sqrt(2 * K / valid_target * self.et / (1 - self.et)))
         #determination of the scaling parameters for each bin
         alpha = np.multiply(sgn_arr, np.sqrt(alpha2))
 
+        #print alpha
+
         #operating on slices of normal array is quicker than on slices of the depend array
         p_save = dstrip(self.p).copy()
-        for i in range(self.nbins):
+        for i in range(valid_length):
             self.ethermo += K[i] * (1 - alpha2[i])
             p_save[bin_contents[i][:]] *= alpha[i]
         self.p = p_save
@@ -1356,7 +1381,7 @@ class Thermo_PILESine(ThermoPILE_L):
         dself = dd(self)
 
         # centroid thermostat
-        self._thermos[0] = ThermoSine(temp=1, dt=1, tau=1, ethermo=0.0, amplfrac=0.0, nbins=50)
+        self._thermos[0] = ThermoSine(temp=1, dt=1, tau=1, ethermo=0.0, amplfrac=0.0, nbins=self.nbins)
         t = self._thermos[0]
         t.bind(nm=nm, prng=prng, fixdof=fixdof, cell=cell)
         dpipe(dself.temp, dd(t).temp)
