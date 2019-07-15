@@ -658,10 +658,15 @@ class Properties(dobject):
                           an isotope atom substitution <sc>, 2) the average of the squares of the excess potential
                           energy <sc**2>, and 3) the average of the exponential of excess potential energy
                           <exp(-beta*sc)>, and 4-5) Suzuki-Chin and Takahashi-Imada 4th-order reweighing term"""},
-            "temp_profile": {"dimension": "temperature",
+        "temp_profile": {"dimension": "temperature",
                              "size": 50,
                              'func': self.get_temp_profile,
                              "help": "The average temperature of 50 bins along the z direction, returned as an array",
+                             "longhelp": """Stuff to add here"""},
+        "del_t": {"dimension": "temperature",
+                             "size": 1,
+                             'func': self.get_delT,
+                             "help": "Difference in average temperature between the hot and cold halves of the system",
                              "longhelp": """Stuff to add here"""}
         }
 
@@ -2177,6 +2182,21 @@ class Properties(dobject):
         temp_array = 2 * K / (dof * Constants.kb)
         #print "temp_array is", temp_array
         return temp_array
+
+    def get_delT(self):
+        z_centroid = dstrip(self.beads.qc)[2::3]
+        lenz = dstrip(self.cell.h)[2][2]
+        z_centroid = z_centroid - np.floor(z_centroid/lenz) * lenz
+        m_arr = dstrip(self.beads.m3)[0][:]
+        bin_edges = np.linspace(0.0, lenz, num=3, endpoint=True)
+        index=np.digitize(z_centroid, bin_edges, right=False) - 1
+        index_p = np.repeat(index, 3)
+        dof = 3 * np.bincount(index)
+        K_arr = 0.5 * np.multiply(dstrip(self.beads.pc), dstrip(self.beads.pc) / m_arr)
+        bin_contents = [np.where(index_p==i) for i in range(2)]
+        K = np.asarray([K_arr[bin_contents[i][:]].sum() for i in range(2)])
+        temp_array = 2 * K / (dof * Constants.kb)
+        return temp_array[0] - temp_array[1]
 
 
 class Trajectories(dobject):
