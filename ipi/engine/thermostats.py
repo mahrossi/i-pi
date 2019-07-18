@@ -1235,7 +1235,6 @@ class ThermoSine(Thermostat):
         """returns an np array of the (nbins + 1) bin edge positions - 0 and lenz are included -
          for which the system is to be thermostatted to - for use in np.digitize
          """
-        #self.zbins.reshape(self, self.nbins + 1)
         return np.linspace(0.0, self.lenz, num=self.nbins + 1, endpoint=True)
 
     def get_sine_temp(self):
@@ -1255,14 +1254,12 @@ class ThermoSine(Thermostat):
         thermostat. See G Bussi, D Donadio, M Parrinello,
         Journal of Chemical Physics 126, 014101 (2007)
         """
-
+        print "self.ethermo in thermosine is ", self.ethermo
         #we need to sort the atoms into bins depending on their centroid z coordinate
         #in order to determine the number of degrees of freedom
 
         #make sure self.zpos is inside the main box (will only work if z isn't more than one box length away from main box)
         z_centroid = self.zpos - np.floor(self.zpos / self.lenz) * self.lenz
-        #print "self.nbins is", self.nbins
-        #print "self.zbins is", self.zbins
 
         #returns an array such that index[i] contains the index of the bin that zpos[i] is inside (from 0 to n_bins - 1)
         index = np.digitize(z_centroid, self.zbins, right=False) - 1
@@ -1276,30 +1273,14 @@ class ThermoSine(Thermostat):
         valid_indices = np.flatnonzero(dof)
         valid_dof = dof[valid_indices]
         valid_length = len(valid_dof)
-        #print valid_dof
-        #print "len nonzero is ", len(valid_indices)
-        #print "valid_indices is", valid_indices
-        #for i in np.nditer(valid_indices):
-            #print i
         #find an array for the KE in each degree of freedom
         K_arr = 0.5 * np.multiply(dstrip(self.p), dstrip(self.p) / dstrip(self.m))
         #gives the indexes of K_arr and self.p that are within each bin
-        #test = [np.where((index_p == i) & (dof[i] != 0)) for i in range(self.nbins)]
-        #print "test is ", test
         bin_contents = [np.where(index_p==i) for i in valid_indices]
-
-        #for i in range(len(valid_indices)):
-            #print "i is", i
-            #print bin_contents[i][:]
-            #print K_arr[bin_contents[i][:]].sum()
 
         #sum over KE for each bin
         K = np.asarray([K_arr[bin_contents[i][:]].sum() for i in range(len(valid_indices))])
-        #print "KIN_E ARRAY IS", K
-        #TODO: check if any KE are zero?
         valid_target = dstrip(self.target)[valid_indices]
-        #print "valid_target is", valid_target
-        #print len(valid_target)
 
         #an array to contain the random gaussian numbers needed for alpha and the sign test
         r_gauss = self.prng.gvec(valid_length)
@@ -1309,15 +1290,13 @@ class ThermoSine(Thermostat):
         rem_array = valid_dof % 2
         #an array to contain the random gamma-distributed numbers
         #with an extra gaussian number added where necessary
-        r_gamma = (2.0 * self.prng.gamma_vec(k_arr, valid_length)) + np.multiply(rem_array, self.prng.gvec(valid_length))
+        r_gamma = (2.0 * self.prng.gamma_vec(k_arr, valid_length)) + np.multiply(rem_array, self.prng.gvec(valid_length)**2)
         #determination of the squared scaling parameter
         alpha2 = self.et + valid_target / K * (1 - self.et) * (r_gauss**2 + r_gamma) + 2.0 * r_gauss * np.sqrt(valid_target / K * self.et * (1 - self.et))
         #an array that contains -1 where the sign of alpha needs to be flipped, and +1 otherwise
         sgn_arr = np.sign(r_gauss + np.sqrt(2 * K / valid_target * self.et / (1 - self.et)))
         #determination of the scaling parameters for each bin
         alpha = np.multiply(sgn_arr, np.sqrt(alpha2))
-
-        #print alpha
 
         #operating on slices of normal array is quicker than on slices of the depend array
         p_save = dstrip(self.p).copy()
