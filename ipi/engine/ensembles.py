@@ -118,11 +118,12 @@ class Ensemble(dobject):
             hweights = np.ones(0)
         self.hweights = np.asarray(hweights)
 
-
         # Internal time counter
         dd(self).time = depend_value(name='time')
         self.time = time
 
+    def copy(self):
+        return Ensemble(self.eens, 0.0, self.temp, self.pext, dstrip(self.stressext).copy())
 
     def bind(self, beads, nm, cell, bforce, fflist, elist=[], xlpot=[], xlkin=[]):
         self.beads = beads
@@ -133,7 +134,7 @@ class Ensemble(dobject):
         dself.econs = depend_value(name='econs', func=self.get_econs)
 
         # this binds just the explicit bias forces
-        self.bias.bind(self.beads, self.cell, self.bcomp, fflist)
+        self.bias.bind(self.beads, self.cell, self.bcomp, fflist,open_paths=nm.open_paths)
 
         dself.econs = depend_value(name='econs', func=self.get_econs)
         # dependencies of the conserved quantity
