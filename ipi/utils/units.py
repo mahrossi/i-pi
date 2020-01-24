@@ -43,16 +43,21 @@ class Elements(dict):
     mass_list = {
         "X": 1.0000 / Constants.amu,
         "H": 1.00794,
-        "D": 2.0141,
         "Z": 1.382943,   # an interpolated H-D atom, based on y=1/sqrt(m) scaling
+        "D": 2.0141,
         "H2": 2.0160,
+        "T": 3.016049,
         "He": 4.002602,
         "Li": 6.9410,
         "Be": 9.012182,
         "B": 10.811,
         "C": 12.0107,
+        "C13": 13.00335,
+        "C14": 14.003241,
         "N": 14.00674,
         "O": 15.9994,
+        "O17": 16.9991315,
+        "O18": 17.9991610,
         "F": 18.998403,
         "Ne": 20.1797,
         "Na": 22.989770,
@@ -62,6 +67,7 @@ class Elements(dict):
         "P": 30.973761,
         "S": 32.066,
         "Cl": 35.4527,
+        "Cl37": 36.96590259,
         "Ar": 39.9480,
         "K": 39.0983,
         "Ca": 40.078,
@@ -80,6 +86,7 @@ class Elements(dict):
         "As": 74.92160,
         "Se": 78.96,
         "Br": 79.904,
+        "Br81": 80.9163,
         "Kr": 83.80,
         "Rb": 85.4678,
         "Sr": 87.62,
@@ -228,12 +235,14 @@ UnitMap = {
         "automatic": 1.00,
         "atomic_unit": 1.00
     },
-    "length": {
+    "length": {  # TODO move angles to separate entry;
         "": 1.00,
         "automatic": 1.00,
         "atomic_unit": 1.00,
         "angstrom": 1.8897261,
-        "meter": 1.8897261e+10
+        "meter": 1.8897261e+10,
+        "radian": 1.00,
+        "degree": 0.017453292519943295
     },
     "volume": {
         "": 1.00,
@@ -278,7 +287,7 @@ UnitMap = {
         "automatic": 1.00,
         "atomic_unit": 1.00,
         "newton": 12137805,
-        "ev/ang" : 0.019446904,
+        "ev/ang": 0.019446904,
     }
 }
 

@@ -24,7 +24,11 @@ Classes:
 import numpy as np
 from copy import copy
 import ipi.engine.initializer
-from ipi.engine.motion import Motion, Dynamics, Replay, GeopMotion, NEBMover, DynMatrixMover, MultiMotion, AlchemyMC, InstantonMotion
+
+from ipi.engine.motion import Motion, Dynamics, ConstrainedDynamics, Replay, GeopMotion, NEBMover,\
+    DynMatrixMover, MultiMotion, AlchemyMC, InstantonMotion,\
+    TemperatureRamp, PressureRamp, AtomSwap, Planetary, AlKMC
+
 from ipi.utils.inputvalue import *
 from ipi.inputs.thermostats import *
 from ipi.inputs.initializer import *
@@ -32,8 +36,13 @@ from .geop import InputGeop
 from .instanton import InputInst
 from .neb import InputNEB
 from .dynamics import InputDynamics
+from .constrained_dynamics import InputConstrainedDynamics
 from .phonons import InputDynMatrix
 from .alchemy import InputAlchemy
+from .atomswap import InputAtomSwap
+from .planetary import InputPlanetary
+from .ramp import InputTemperatureRamp, InputPressureRamp
+from .al6xxx_kmc import InputAlKMC
 from ipi.utils.units import *
 
 __all__ = ['InputMotion']
@@ -56,8 +65,8 @@ class InputMotionBase(Input):
     """
 
     attribs = {"mode": (InputAttribute, {"dtype": str,
-                                         "help": "How atoms should be moved at each step in the simulatio. 'replay' means that a simulation is restarted from a previous simulation.",
-                                         "options": ['vibrations', 'minimize', 'replay', 'neb', 'dynamics', 'alchemy', 'instanton', 'dummy']})}
+                                         "help": "How atoms should be moved at each step in the simulatio. 'replay' means that a simulation is replayed from trajectories provided to i-PI.",
+                                         "options": ['vibrations', 'minimize', 'replay', 'neb', 'dynamics', 'constrained_dynamics', 't_ramp', 'p_ramp', 'alchemy', 'atomswap', 'planetary', 'instanton', 'al-kmc', 'dummy']})}
 
     fields = {"fixcom": (InputValue, {"dtype": bool,
                                       "default": True,
@@ -71,14 +80,26 @@ class InputMotionBase(Input):
                                            "help": "Option for geometry optimization"}),
               "dynamics": (InputDynamics, {"default": {},
                                            "help": "Option for (path integral) molecular dynamics"}),
+              "constrained_dynamics": (InputConstrainedDynamics, {"default": {},
+                                                                  "help": "Option for constrained classical molecular dynamics"}),
               "file": (InputInitFile, {"default": input_default(factory=ipi.engine.initializer.InitFile, kwargs={"mode": "xyz"}),
                                        "help": "This describes the location to read a trajectory file from."}),
               "vibrations": (InputDynMatrix, {"default": {},
                                               "help": "Option for phonon computation"}),
               "alchemy": (InputAlchemy, {"default": {},
                                          "help": "Option for alchemical exchanges"}),
+              "atomswap": (InputAtomSwap, {"default": {},
+                                           "help": "Option for Monte Carlo atom swap"}),
+              "t_ramp": (InputTemperatureRamp, {"default": {},
+                                                "help": "Option for temperature ramp"}),
+              "p_ramp": (InputPressureRamp, {"default": {},
+                                             "help": "Option for pressure ramp"}),
               "instanton": (InputInst, {"default": {},
-                                        "help": "Option for Instanton optimization"})
+                                        "help": "Option for Instanton optimization"}),
+              "al6xxx_kmc" : ( InputAlKMC, { "default" : {},
+                                             "help":  "Option for Al-6xxx KMC" } ),
+              "planetary": (InputPlanetary, {"default": {},
+                                             "help": "Option for planetary model calculator"})
               }
     dynamic = {}
 
@@ -111,6 +132,10 @@ class InputMotionBase(Input):
             self.mode.store("dynamics")
             self.dynamics.store(sc)
             tsc = 1
+        elif type(sc) is ConstrainedDynamics:
+            self.mode.store("constrained_dynamics")
+            self.constrained_dynamics.store(sc)
+            tsc = 1
         elif type(sc) is DynMatrixMover:
             self.mode.store("vibrations")
             self.vibrations.store(sc)
@@ -119,9 +144,28 @@ class InputMotionBase(Input):
             self.mode.store("alchemy")
             self.alchemy.store(sc)
             tsc = 1
+        elif type(sc) is AtomSwap:
+            self.mode.store("atomswap")
+            self.atomswap.store(sc)
+            tsc = 1
         elif type(sc) is InstantonMotion:
             self.mode.store("instanton")
             self.instanton.store(sc)
+            tsc = 1
+        elif type(sc) is Planetary:
+            self.mode.store("planetary")
+            self.planetary.store(sc)
+            tsc = 1
+        elif type(sc) is TemperatureRamp:
+            self.mode.store("t_ramp")
+            self.t_ramp.store(sc)
+            tsc = 1
+        elif type(sc) is PressureRamp:
+            self.mode.store("p_ramp")
+            self.p_ramp.store(sc)
+        elif type(sc) is AlKMC:
+            self.mode.store("al-kmc")
+            self.al6xxx_kmc.store(sc)
             tsc = 1
         else:
             raise ValueError("Cannot store Mover calculator of type " + str(type(sc)))
@@ -150,12 +194,24 @@ class InputMotionBase(Input):
             sc = NEBMover(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.neb_optimizer.fetch())
         elif self.mode.fetch() == "dynamics":
             sc = Dynamics(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.dynamics.fetch())
+        elif self.mode.fetch() == "constrained_dynamics":
+            sc = ConstrainedDynamics(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.constrained_dynamics.fetch())
         elif self.mode.fetch() == "vibrations":
             sc = DynMatrixMover(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.vibrations.fetch())
         elif self.mode.fetch() == "alchemy":
             sc = AlchemyMC(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.alchemy.fetch())
+        elif self.mode.fetch() == "atomswap":
+            sc = AtomSwap(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.atomswap.fetch())
         elif self.mode.fetch() == "instanton":
             sc = InstantonMotion(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.instanton.fetch())
+        elif self.mode.fetch() == "planetary":
+            sc = Planetary(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.planetary.fetch())
+        elif self.mode.fetch() == "t_ramp":
+            sc = TemperatureRamp(**self.t_ramp.fetch())
+        elif self.mode.fetch() == "p_ramp":
+            sc = PressureRamp(**self.p_ramp.fetch())
+        elif self.mode.fetch() == "al-kmc":
+            sc = AlKMC(fixcom=self.fixcom.fetch(), fixatoms=self.fixatoms.fetch(), **self.al6xxx_kmc.fetch() )
         else:
             sc = Motion()
             # raise ValueError("'" + self.mode.fetch() + "' is not a supported motion calculation mode.")
@@ -179,11 +235,17 @@ class InputMotion(InputMotionBase):
 
         if type(motion) is MultiMotion:
             self.mode.store("multi")
-            self.extra = []
-            for m in motion.mlist:
-                im = InputMotionBase()
-                im.store(m)
-                self.extra.append(("motion", im))
+
+            if len(self.extra) != len(motion.mlist):
+                self.extra = [0] * len(motion.mlist)
+
+            for ii, m in enumerate(motion.mlist):
+                if self.extra[ii] == 0:
+                    im = InputMotionBase()
+                    im.store(m)
+                    self.extra[ii] = ("motion", im)
+                else:
+                    self.extra[ii][1].store(m)
         else:
             super(InputMotion, self).store(motion)
 

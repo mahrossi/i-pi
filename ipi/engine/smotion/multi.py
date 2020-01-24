@@ -12,6 +12,7 @@ from ipi.utils.messages import verbosity, warning, info
 
 __all__ = ['MultiSmotion']
 
+
 class MultiSmotion(Smotion):
     """A class to hold multiple Smotion objects to be executed serially.
     """
@@ -30,7 +31,7 @@ class MultiSmotion(Smotion):
         for m in self.mlist:
             m.step(step)
 
-    def bind(self, syslist, prng):
+    def bind(self, syslist, prng, omaker):
         """Binds beads, cell, bforce, and prng to the calculator.
 
         This takes a beads object, a cell object, a forcefield object and a
@@ -49,8 +50,8 @@ class MultiSmotion(Smotion):
                 generation.
         """
 
-        super(MultiSmotion, self).bind(syslist, prng)
+        super(MultiSmotion, self).bind(syslist, prng, omaker)
         for k, m in enumerate(self.mlist):
-            m.bind(syslist,prng)
-            if type(m) is MetaDyn and k!=len(self.mlist)-1 and type(self.mlist[k+1]) != MetaDyn :
+            m.bind(syslist, prng, omaker)
+            if type(m) is MetaDyn and k != len(self.mlist) - 1 and type(self.mlist[k + 1]) != MetaDyn:
                 warning("MetaD Smotion should come last in a multi Smotion to avoid a discrepancy between i-PI and PLUMED outputs", verbosity.low)

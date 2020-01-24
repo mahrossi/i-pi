@@ -51,13 +51,14 @@ class Simulation(dobject):
             the current state of the simulation. This is because we cannot
             restart from half way through a step, only from the beginning of a
             step, so this is necessary for the trajectory to be continuous.
+        read_only: If set to true, it creates the simulation object but doesn't  initialize/open the sockets
 
     Depend objects:
         step: The current simulation step.
     """
 
     @staticmethod
-    def load_from_xml(fn_input, custom_verbosity=None, request_banner=False):
+    def load_from_xml(fn_input, custom_verbosity=None, request_banner=False, read_only=False):
         """Load an XML input file and return a `Simulation` object.
 
         Arguments:
@@ -91,7 +92,7 @@ class Simulation(dobject):
         simulation = input_simulation.fetch()
 
         # pipe between the components of the simulation
-        simulation.bind()
+        simulation.bind(read_only)
 
         # echo the input file if verbose enough
         if verbosity.level > 0:
@@ -153,16 +154,32 @@ class Simulation(dobject):
         self.chk = None
         self.rollback = True
 
-    def bind(self):
+    def bind(self, read_only=False):
         """Calls the bind routines for all the objects in the simulation."""
 
         if self.tsteps <= self.step:
             raise ValueError("Simulation has already run for total_steps, will not even start. "
                              "Modify total_steps or step counter to continue.")
 
+        # initializes the output maker so it can be passed around to systems
+        f_start = (self.step == 0)  # special operations if we're starting from scratch
+        if f_start:
+            mode = "w"
+        else:
+            mode = "a"
+        self.output_maker = eoutputs.OutputMaker(self.outtemplate.prefix, f_start)
+
         for s in self.syslist:
             # binds important computation engines
             s.bind(self)
+
+        if read_only:  # returns before we open the sockets
+            return
+
+        # start forcefields here so we avoid having a shitload of files printed
+        # out only to find the socket is busy or whatever prevented starting the threads
+        for k, f in self.fflist.iteritems():
+            f.start()
 
         # Checks for repeated filenames.
         filename_list = [x.filename for x in self.outtemplate]
@@ -171,6 +188,9 @@ class Simulation(dobject):
 
         self.outputs = []
         for o in self.outtemplate:
+            o = deepcopy(o)  # avoids overwriting the actual filename
+            if self.outtemplate.prefix != "":
+                o.filename = self.outtemplate.prefix + "." + o.filename
             if type(o) is eoutputs.CheckpointOutput:    # checkpoints are output per simulation
                 o.bind(self)
                 self.outputs.append(o)
@@ -180,15 +200,17 @@ class Simulation(dobject):
                     no = deepcopy(o)
                     if s.prefix != "":
                         no.filename = s.prefix + "_" + no.filename
-                    no.bind(s)
+                    no.bind(s, mode)
                     self.outputs.append(no)
+                    if f_start:  # starting of simulation, print headers (if any)
+                        no.print_header()
                     isys += 1
 
         self.chk = eoutputs.CheckpointOutput("RESTART", 1, True, 0)
         self.chk.bind(self)
 
         if not self.smotion is None:
-            self.smotion.bind(self.syslist, self.prng)
+            self.smotion.bind(self.syslist, self.prng, self.output_maker)
 
     def softexit(self):
         """Deals with a soft exit request.
@@ -217,8 +239,8 @@ class Simulation(dobject):
         softexit.register_function(self.softexit)
         softexit.start(self.ttime)
 
-        for k, f in self.fflist.iteritems():
-            f.run()
+#        for k, f in self.fflist.iteritems():
+#            f.run()
 
         # prints inital configuration -- only if we are not restarting
         if self.step == 0:
@@ -269,8 +291,10 @@ class Simulation(dobject):
                     # creates separate threads for the different systems
                     st = threading.Thread(target=s.motion.step, name=s.prefix, kwargs={"step": self.step})
                     st.daemon = True
-                    st.start()
                     stepthreads.append(st)
+
+                for st in stepthreads:
+                    st.start()
 
                 for st in stepthreads:
                     while st.isAlive():
