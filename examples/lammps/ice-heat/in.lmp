@@ -16,7 +16,7 @@ neighbor	2.0 bin
 
 timestep	0.00025
 
-#velocity all create 298.0 2345187
+velocity all create 50.0 2345187
 
 #thermo_style	multi
 #thermo		1

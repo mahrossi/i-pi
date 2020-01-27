@@ -33,6 +33,7 @@ class Atom(dobject):
     Depend objects:
        p: The three components of the momentum of the atom.
        q: The three components of the position of the atom.
+       S: The six components of the Stress per atom.
        m: The mass of the atom.
        name: The name of the atom.
        m3: An array of 3 elements with each element being the mass of the atom.
@@ -40,7 +41,7 @@ class Atom(dobject):
     """
 
     def __init__(self, system, index):
-        """Initialises Atom.
+        """Initialises Atom. HHK changes
 
         Args:
            system: An Atoms object containing the required atom.
@@ -51,6 +52,7 @@ class Atom(dobject):
 
         dself.p = system.p[3 * index:3 * index + 3]
         dself.q = system.q[3 * index:3 * index + 3]
+        dself.S = system.S[6 * index:6 * index + 6]
         dself.m = system.m[index:index + 1]
         dself.name = system.names[index:index + 1]
         dself.m3 = system.m3[3 * index:3 * index + 3]
@@ -106,7 +108,7 @@ class Atoms(dobject):
     """
 
     def __init__(self, natoms, _prebind=None):
-        """Initialises Atoms.
+        """Initialises Atoms. HHK Changes
 
         Each replica and the centroid coordinate are all held as Atoms objects,
         and so slices of the global position and momentum arrays must be used in
@@ -122,19 +124,22 @@ class Atoms(dobject):
         self.natoms = natoms
 
         dself = dd(self)  # direct access
-
+        #print "PB", _prebind
         if _prebind is None:
+            #print "A"
             dself.q = depend_array(name="q", value=np.zeros(3 * natoms, float))
             dself.p = depend_array(name="p", value=np.zeros(3 * natoms, float))
+            dself.S = depend_array(name="S", value=np.zeros(6 * natoms, float))
             dself.m = depend_array(name="m", value=np.zeros(natoms, float))
             dself.names = depend_array(name="names",
                                        value=np.zeros(natoms, np.dtype('|S6')))
         else:
+            #print "B"
             dself.q = _prebind[0]
             dself.p = _prebind[1]
             dself.m = _prebind[2]
             dself.names = _prebind[3]
-
+            dself.S = _prebind[4]
         dself.m3 = depend_array(name="m3", value=np.zeros(3 * natoms, float),
                                 func=self.mtom3, dependencies=[dself.m])
 
@@ -155,14 +160,14 @@ class Atoms(dobject):
         newat = Atoms(self.natoms)
         newat.q[:] = self.q
         newat.p[:] = self.p
+        newat.S[:] = self.S
         newat.m[:] = self.m
         newat.names[:] = self.names
         return newat
 
-    def __len__(self):
-        """Length function.
 
-        This is called whenever the standard function len(atoms) is used.
+
+        """This is called whenever the standard function len(atoms) is used.
 
         Returns:
            The number of atoms.

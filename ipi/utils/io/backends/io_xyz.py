@@ -72,7 +72,7 @@ def print_xyz(atoms, cell, filedesc=sys.stdout, title="", cell_conv=1.0, atoms_c
 # Cell type patterns
 cell_re = [re.compile('CELL[\(\[\{]abcABC[\)\]\}]: ([-+0-9\.Ee ]*)\s*'),
            re.compile('CELL[\(\[\{]H[\)\]\}]: ([-+0-9\.?Ee ]*)\s*'),
-           re.compile('CELL[\(\[\{]GENH[\)\]\}]: ([-+0-9\.?Ee ]*)\s*')]
+           re.compile('CELL[\(\[\{]GENH[\)\]\}]: ([-+0-9\.?Ee ]*)\s*'),re.compile('CELL[\(\[\{]Stress[\)\]\}]: ([-+0-9\.?Ee ]*)\s*')]
 
 
 def read_xyz(filedesc):
@@ -96,6 +96,8 @@ def read_xyz(filedesc):
     # Extracting cell
     cell = [key.search(comment) for key in cell_re]
     usegenh = False
+    #print "HHK", cell
+    Stress_Bool = cell[3]
     if cell[0] is not None:    # abcABC
         a, b, c = [float(x) for x in cell[0].group(1).split()[:3]]
         alpha, beta, gamma = [float(x) * deg2rad
@@ -114,29 +116,49 @@ def read_xyz(filedesc):
     else:                     # defaults to unit box
         h = np.array([[-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
     cell = h
-
-    qatoms = np.zeros(3 * natoms)
+    #print "Stress_Bool", natoms    
+    if Stress_Bool is None:
+        qatoms = np.zeros(3 * natoms)
+    else:
+        qatoms = np.zeros(6 * natoms)
     names = np.zeros(natoms, dtype='|S4')
     masses = np.zeros(natoms)
-
+    # HHK modefied extraction of time frame Extraction
     # Extracting a time-frame information
     atom_counter = 0
-    for iat, line in enumerate(filedesc):
-        body = line.split()
-        names[iat], masses[iat] = body[0], Elements.mass(body[0])
-        x, y, z = float(body[1]), float(body[2]), float(body[3])
+    if Stress_Bool is None:
+          for iat, line in enumerate(filedesc):
+                body = line.split()
+                names[iat], masses[iat] = body[0], Elements.mass(body[0])
+                x, y, z = float(body[1]), float(body[2]), float(body[3])
+                if usegenh: 
+                # must convert from the input cell parameters to the internal convention
+                    u = np.array([x, y, z])
+                    us = np.dot(u, invgenh)
+                    u = np.dot(h, us)
+                    x, y, z = u
 
-        if usegenh:
-            # must convert from the input cell parameters to the internal convention
-            u = np.array([x, y, z])
-            us = np.dot(u, invgenh)
-            u = np.dot(h, us)
-            x, y, z = u
+                qatoms[3 * iat], qatoms[3 * iat + 1], qatoms[3 * iat + 2] = x, y, z
+                atom_counter += 1
+                if atom_counter == natoms:
+                    break
+    else:
+        for iat, line in enumerate(filedesc):
+            body = line.split()
+            names[iat], masses[iat] = body[0], Elements.mass(body[0])
+            x, y, z, a, b, c = float(body[1]), float(body[2]), float(body[3]),float(body[4]), float(body[5]), float(body[6])
 
-        qatoms[3 * iat], qatoms[3 * iat + 1], qatoms[3 * iat + 2] = x, y, z
-        atom_counter += 1
-        if atom_counter == natoms:
-            break
+            if usegenh:
+                # must convert from the input cell parameters to the internal convention
+                u = np.array([x, y, z]) 
+                us = np.dot(u, invgenh)
+                u = np.dot(h, us) 
+                x, y, z = u 
+
+            qatoms[6 * iat], qatoms[6 * iat + 1], qatoms[6 * iat + 2],qatoms[6 * iat + 3], qatoms[6 * iat + 4], qatoms[6 * iat + 5] = x, y, z, a, b ,c
+            atom_counter += 1
+            if atom_counter == natoms:
+                break
 
     if natoms != len(names):
         raise ValueError("The number of atom records does not match the header of the xyz file.")

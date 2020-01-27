@@ -91,7 +91,10 @@ def process_units(comment, cell, data, names, masses, natoms, dimension="automat
     # Return data as i-PI structures
     cell = Cell(cell)
     atoms = Atoms(natoms)
-    atoms.q[:] = data
+    if len(atoms.q) == len(data):
+        atoms.q[:] = data
+    elif len(atoms.S) == len(data):
+        atoms.S[:] = data
     atoms.names[:] = names
     atoms.m[:] = masses
 

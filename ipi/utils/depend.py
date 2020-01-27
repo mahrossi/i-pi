@@ -750,7 +750,7 @@ class dobject(object):
         subclasses dobject such that depend objects are called with their own
         __get__() function rather than the standard one.
         """
-
+        #print "NAME",name
         value = super(dobject, self).__getattribute__(name)
         if issubclass(value.__class__, depend_base):
             value = value.__get__(self, self.__class__)
