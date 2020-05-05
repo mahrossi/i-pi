@@ -2,3 +2,5 @@ numpy
 pytest
 pytest-mock
 mock
+flake8
+coverage
