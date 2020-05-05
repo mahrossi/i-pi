@@ -2,7 +2,7 @@ name: Python application
 
 on:
   push:
-    branches: [ black-formating ]
+    branches: [ master-py3 ]
   pull_request:
     branches: [ master-py3 ]
 
